@@ -137,9 +137,12 @@
   const CELL = 22;              // 每格像素
   const START_SPEED = 150;      // 起始间隔(毫秒)
   const MIN_SPEED = 60;         // 最快间隔
-  const SPEED_STEP = 4;         // 每吃一个提速
-  const GRID_LINE = 'rgba(255, 255, 255, .045)';   // 网格线
-  const GRID_EDGE = 'rgba(255, 255, 255, .10)';    // 边框(即墙体)
+  const FOODS_PER_LEVEL = 4;    // 每吃几个果子升一级
+  const SPEED_PER_LEVEL = 8;    // 每升一级间隔减少多少毫秒(想更平缓就调小)
+  // 升到这一级速度刚好触底,再往上等级不再增长
+  const MAX_LEVEL = Math.ceil((START_SPEED - MIN_SPEED) / SPEED_PER_LEVEL) + 1;
+  const GRID_LINE = 'rgba(255, 255, 255, .09)';    // 网格线
+  const GRID_EDGE = 'rgba(255, 255, 255, .18)';    // 边框(即墙体)
 
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
@@ -165,7 +168,7 @@
 
   /** 状态: ready | playing | paused | over */
   let state = 'ready';
-  let snake, dir, queue, food, score, speed, timer;
+  let snake, dir, queue, food, score, speed, level, foods, timer;
 
   const same = (a, b) => a.x === b.x && a.y === b.y;
 
@@ -175,6 +178,8 @@
     dir = { x: 1, y: 0 };
     queue = [];            // 缓存按键,避免一帧内连按导致自撞
     score = 0;
+    foods = 0;
+    level = 1;
     speed = START_SPEED;
     placeFood();
     syncHud();
@@ -182,7 +187,14 @@
 
   function syncHud() {
     scoreEl.textContent = score;
-    levelEl.textContent = Math.min(9, Math.floor((START_SPEED - speed) / SPEED_STEP / 4) + 1);
+    levelEl.textContent = level;
+  }
+
+  // 等级只由吃掉的果子数决定,速度由等级推出 —— 改 SPEED_PER_LEVEL 即可调平缓度
+  function applyLevel() {
+    foods++;
+    level = Math.min(MAX_LEVEL, Math.floor(foods / FOODS_PER_LEVEL) + 1);
+    speed = Math.max(MIN_SPEED, START_SPEED - (level - 1) * SPEED_PER_LEVEL);
   }
 
   function placeFood() {
@@ -256,7 +268,7 @@
 
     if (food && same(head, food)) {
       score += 10;
-      speed = Math.max(MIN_SPEED, speed - SPEED_STEP);
+      applyLevel();
       clearInterval(timer);
       timer = setInterval(tick, speed);
       placeFood();
