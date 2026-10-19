@@ -257,8 +257,11 @@
 
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-    // 撞墙
-    if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return gameOver();
+    // 穿墙模式：从边界出去，从对面出来
+    if (head.x < 0) head.x = COLS - 1;
+    if (head.x >= COLS) head.x = 0;
+    if (head.y < 0) head.y = ROWS - 1;
+    if (head.y >= ROWS) head.y = 0;
 
     // 咬到自己(尾巴这一格会移开,所以不算)
     const body = snake.slice(0, -1);
@@ -415,7 +418,7 @@
 
   reset();
   draw();
-  showOverlay('准备好了吗?', '吃果子变长,别撞墙也别咬到自己');
+  showOverlay('准备好了吗?', '吃果子变长,可以穿墙,咬到自己才结束');
   overlayBtn.textContent = '开始游戏';
 })();
 </script>
