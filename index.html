@@ -138,6 +138,8 @@
   const START_SPEED = 150;      // 起始间隔(毫秒)
   const MIN_SPEED = 60;         // 最快间隔
   const SPEED_STEP = 4;         // 每吃一个提速
+  const GRID_LINE = 'rgba(255, 255, 255, .045)';   // 网格线
+  const GRID_EDGE = 'rgba(255, 255, 255, .10)';    // 边框(即墙体)
 
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
@@ -281,19 +283,28 @@
     ctx.closePath();
   }
 
+  // 网格背景。用 fillRect 画 1px 线而不是 stroke,
+  // 这样在任何 devicePixelRatio 下都不会被抗锯齿糊成半透明。
+  function drawGrid(W, H) {
+    ctx.fillStyle = GRID_LINE;
+    for (let x = 1; x < COLS; x++) ctx.fillRect(x * CELL, 0, 1, H);
+    for (let y = 1; y < ROWS; y++) ctx.fillRect(0, y * CELL, W, 1);
+
+    // 四周边框 —— 这圈就是撞上去会结束游戏的墙
+    ctx.fillStyle = GRID_EDGE;
+    ctx.fillRect(0, 0, W, 1);
+    ctx.fillRect(0, H - 1, W, 1);
+    ctx.fillRect(0, 0, 1, H);
+    ctx.fillRect(W - 1, 0, 1, H);
+  }
+
   function draw() {
     const W = COLS * CELL, H = ROWS * CELL;
 
     ctx.fillStyle = '#0d1117';
     ctx.fillRect(0, 0, W, H);
 
-    // 棋盘格背景
-    ctx.fillStyle = 'rgba(255, 255, 255, .015)';
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        if ((x + y) % 2 === 0) ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
-      }
-    }
+    drawGrid(W, H);
 
     // 果子
     if (food) {
